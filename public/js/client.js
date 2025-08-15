@@ -30,6 +30,11 @@ console.log(`Your message color will be: ${myMessageBackgroundColorClass}`);
 
 let currentReplyToMessage = null;
 
+let typingTimeout;
+let isTyping = false;
+const TYPING_TIMEOUT_MILLISECONDS = 1500; 
+const currentlyTypingUsers = new Map();
+
 const welcomeScreen = document.getElementById('welcome-screen');
 const welcomeAnonymousIdSpan = document.getElementById('welcome-anonymous-id');
 const welcomeAvatarDisplayDiv = document.getElementById('welcome-avatar-display');
@@ -74,7 +79,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         });
     }
+
+
+    if (messageInput) {
+        messageInput.addEventListener('input', () => {
+            if (!isTyping) {
+                isTyping = true;
+                socket.emit('typing', {
+                    anonymousDisplayId: myAnonymousDisplayId,
+                    avatar: myGeneratedAvatarSvg,
+                    color: myMessageBackgroundColorClass
+                });
+            }
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                isTyping = false;
+                socket.emit('stopped typing', { anonymousDisplayId: myAnonymousDisplayId });
+            }, TYPING_TIMEOUT_MILLISECONDS);
+        });
+    }
 });
+
+
+
 
 
 const socket = io();
@@ -86,6 +113,7 @@ const replyContextDiv = document.getElementById('reply-context');
 const replyToDisplayIdSpan = document.getElementById('reply-to-display-id');
 const replyToContentP = document.getElementById('reply-to-content');
 const replyAvatarDiv = replyContextDiv.querySelector('.reply-avatar');
+const typingIndicatorDiv = document.getElementById('typing-indicator'); 
 
 
 /**
@@ -114,6 +142,47 @@ function clearReplyContext() {
     replyToDisplayIdSpan.textContent = '';
     replyToContentP.textContent = '';
     replyAvatarDiv.innerHTML = '';
+}
+
+
+function updateTypingIndicator() {
+    if (currentlyTypingUsers.size === 0) {
+        typingIndicatorDiv.classList.add('hidden');
+        typingIndicatorDiv.innerHTML = '';
+        return;
+    }
+
+    typingIndicatorDiv.classList.remove('hidden');
+    const typingUsersArray = Array.from(currentlyTypingUsers.values()); 
+
+    let indicatorHtml = '';
+    if (typingUsersArray.length === 1) {
+        const user = typingUsersArray[0];
+        const userAvatarHtml = (typeof jdenticon !== 'undefined' && user.anonymousDisplayId) ?
+                                jdenticon.toSvg(user.anonymousDisplayId, 20) :
+                                `<div class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">?</div>`;
+        indicatorHtml = `<div class="flex items-center justify-center space-x-2">
+                            <div class="message-avatar w-5 h-5 rounded-full overflow-hidden">${userAvatarHtml}</div>
+                            <span>[${user.anonymousDisplayId}] is typing...</span>
+                         </div>`;
+    } else if (typingUsersArray.length === 2) {
+        const user1 = typingUsersArray[0];
+        const user2 = typingUsersArray[1];
+        const user1AvatarHtml = (typeof jdenticon !== 'undefined' && user1.anonymousDisplayId) ?
+                                jdenticon.toSvg(user1.anonymousDisplayId, 20) : `<div class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">?</div>`;
+        const user2AvatarHtml = (typeof jdenticon !== 'undefined' && user2.anonymousDisplayId) ?
+                                jdenticon.toSvg(user2.anonymousDisplayId, 20) : `<div class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">?</div>`;
+        indicatorHtml = `<div class="flex items-center justify-center space-x-2">
+                            <div class="message-avatar w-5 h-5 rounded-full overflow-hidden">${user1AvatarHtml}</div>
+                            <span>[${user1.anonymousDisplayId}]</span>,
+                            <div class="message-avatar w-5 h-5 rounded-full overflow-hidden">${user2AvatarHtml}</div>
+                            <span>[${user2.anonymousDisplayId}] are typing...</span>
+                         </div>`;
+    } else {
+        indicatorHtml = `${typingUsersArray.length} users are typing...`;
+    }
+    typingIndicatorDiv.innerHTML = indicatorHtml;
+    messagesList.scrollTop = messagesList.scrollHeight; 
 }
 
 
@@ -223,11 +292,19 @@ messageForm.addEventListener('submit', (e) => {
         messageInput.value = '';
         messageInput.focus();
         clearReplyContext(); 
+
+        clearTimeout(typingTimeout);
+        if (isTyping) {
+            isTyping = false;
+            socket.emit('stopped typing', { anonymousDisplayId: myAnonymousDisplayId });
+        }
     }
 });
 
 socket.on('chat message', (msg) => {
     appendMessage(msg, false); 
+    currentlyTypingUsers.delete(msg.anonymousDisplayId);
+    updateTypingIndicator();
 });
 
 socket.on('history', (historyMessages) => {
@@ -237,6 +314,26 @@ socket.on('history', (historyMessages) => {
     });
     messagesList.scrollTop = messagesList.scrollHeight;
 });
+
+
+socket.on('typing', (data) => {
+    if (data.anonymousDisplayId !== myAnonymousDisplayId) { 
+        currentlyTypingUsers.set(data.anonymousDisplayId, {
+            anonymousDisplayId: data.anonymousDisplayId,
+            avatar: data.avatar,
+            color: data.color
+        });
+        updateTypingIndicator();
+    }
+});
+
+socket.on('stopped typing', (data) => {
+    if (data.anonymousDisplayId !== myAnonymousDisplayId) { 
+        currentlyTypingUsers.delete(data.anonymousDisplayId);
+        updateTypingIndicator();
+    }
+});
+
 
 socket.on('connect', () => {
     console.log('Connected to server!');
@@ -249,13 +346,16 @@ socket.on('disconnect', () => {
     item.textContent = 'You have been disconnected from the chat.';
     messagesList.appendChild(item);
     messagesList.scrollTop = messagesList.scrollHeight;
+
+    currentlyTypingUsers.clear();
+    updateTypingIndicator();
 });
 
 socket.on('connect_error', (err) => {
     console.error('Socket.IO connection error:', err.message);
     const item = document.createElement('li');
     item.classList.add('mb-2', 'p-2', 'rounded-lg', 'bg-red-100', 'text-red-700', 'mx-auto');
-    item.textContent = `Connection error: ${err.message}. Retrying...`;
+    item.textContent = `Connection error😒 Retrying...`;
     messagesList.appendChild(item);
     messagesList.scrollTop = messagesList.scrollHeight;
 });

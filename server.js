@@ -79,10 +79,21 @@ io.on('connection', (socket) => {
                 replyToDisplayId: savedMessage.replyToDisplayId,
                 replyToAvatar: savedMessage.replyToAvatar
             });
+            
+            socket.broadcast.emit('stopped typing', { anonymousDisplayId: anonymousDisplayId });
+
         } catch (error) {
             console.error('Error saving or broadcasting message:', error);
             socket.emit('error', 'Failed to send message. Please try again.');
         }
+    });
+
+    socket.on('typing', (data) => {
+        socket.broadcast.emit('typing', data);
+    });
+
+    socket.on('stopped typing', (data) => {
+        socket.broadcast.emit('stopped typing', data);
     });
 
     socket.on('disconnect', () => {
