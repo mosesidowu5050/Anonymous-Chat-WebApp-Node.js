@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
+
 const Message = require('./src/models/Message');
 
 dotenv.config();
@@ -16,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/anonymous_chat_db';
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log('MongoDB connected successfully')) 
+    .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('MongoDB connection error:', err));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -30,30 +31,53 @@ io.on('connection', (socket) => {
         .sort({ createdAt: -1 })
         .limit(50)
         .then(messages => {
-            socket.emit('history', messages.reverse()); 
+            socket.emit('history', messages.reverse());
         })
         .catch(err => console.error('Error fetching messages:', err));
 
-    // --- Incoming Message Event: Changed 'sendMessage' to 'chat message' to match client.js ---
-    socket.on('chat message', async (messageData) => { 
-        const { content, anonymousDisplayId } = messageData; 
+    socket.on('chat message', async (messageData) => {
+        const {
+            content,
+            anonymousDisplayId,
+            avatar,
+            color,               
+            replyToMessageId,
+            replyToContent,
+            replyToDisplayId,
+            replyToAvatar
+        } = messageData;
 
-        // Basic server-side validation: ensure content is a string
-        if (typeof content !== 'string') {
-            console.warn('Received invalid message content type. Ignoring.');
+        if (typeof content !== 'string' || typeof anonymousDisplayId !== 'string' || typeof avatar !== 'string' || typeof color !== 'string') {
+            console.warn('Received invalid message data. Ignoring.');
             return;
         }
 
         try {
             const newMessage = new Message({
-                content: content
+                content: content,
+                anonymousDisplayId: anonymousDisplayId,
+                avatar: avatar,
+                color: color, 
+                replyToMessageId: replyToMessageId || null,
+                replyToContent: replyToContent || null,
+                replyToDisplayId: replyToDisplayId || null,
+                replyToAvatar: replyToAvatar || null
             });
-            await newMessage.save();
-            console.log('Message saved to DB:', newMessage);
+            const savedMessage = await newMessage.save();
+            console.log('Message saved to DB:', savedMessage);
 
             io.emit('chat message', {
-                content: content,
-                anonymousDisplayId: anonymousDisplayId 
+                _id: savedMessage._id.toString(),
+                messageId: savedMessage.messageId,
+                content: savedMessage.content,
+                anonymousDisplayId: savedMessage.anonymousDisplayId,
+                avatar: savedMessage.avatar,
+                color: savedMessage.color, 
+                createdAt: savedMessage.createdAt,
+                replyToMessageId: savedMessage.replyToMessageId,
+                replyToContent: savedMessage.replyToContent,
+                replyToDisplayId: savedMessage.replyToDisplayId,
+                replyToAvatar: savedMessage.replyToAvatar
             });
         } catch (error) {
             console.error('Error saving or broadcasting message:', error);
@@ -66,7 +90,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Start the server
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
     console.log(`Open your browser at http://localhost:${PORT}`);

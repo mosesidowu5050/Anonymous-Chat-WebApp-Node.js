@@ -7,31 +7,66 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.1.1/dist/jdenticon.min.js" xintegrity="sha384-rObI/YV0XG9c3sK6wW7Xh+yvX7c5V9/2Q1N5Wz3ZgC2I5j8Q2O5eWq7z+p"></script>
 </head>
 <body class="font-inter bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
-    <div class="chat-container bg-white shadow-xl rounded-lg w-full max-w-md mx-auto overflow-hidden flex flex-col">
-        <div class="bg-indigo-600 text-white p-4 sm:p-5 rounded-t-lg flex items-center justify-between">
-            <h1 class="text-xl sm:text-2xl font-bold">Anonymous Chat</h1>
-            <span id="my-anonymous-id" class="text-sm sm:text-base bg-indigo-700 px-3 py-1 rounded-full opacity-75"></span>
+
+    <div id="welcome-screen" class="fixed inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 text-white flex flex-col items-center justify-center p-4 z-50 transition-opacity duration-500 ease-in-out opacity-100">
+        <h2 class="text-4xl sm:text-5xl font-bold mb-6 text-center">Welcome to Anonymous Chat😂!</h2>
+        <p class="text-lg sm:text-xl mb-8 text-center">Your Anonymous Nickname:</p>
+        <div class="flex flex-col items-center space-y-4 mb-12">
+            <div id="welcome-avatar-display" class="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center border-4 border-white shadow-lg">
+            </div>
+            <span id="welcome-anonymous-id" class="text-3xl sm:text-4xl font-extrabold tracking-wide bg-white text-indigo-700 px-6 py-3 rounded-full shadow-lg"></span>
         </div>
+        <button id="start-chat-button" class="bg-white text-indigo-700 font-bold px-8 py-4 rounded-full text-lg sm:text-xl shadow-lg hover:bg-indigo-100 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+            Start Chatting
+        </button>
+    </div>
 
-        <ul id="messages" class="flex-grow p-4 sm:p-5 overflow-y-auto bg-gray-50 text-gray-800 text-sm sm:text-base">
-        </ul>
+    <div id="chat-container-wrapper" class="opacity-0 transition-opacity duration-500 ease-in-out pointer-events-none w-full max-w-md mx-auto">
+        <div class="chat-container bg-white shadow-xl rounded-lg w-full overflow-hidden flex flex-col">
+            <div class="bg-indigo-600 text-white p-4 sm:p-5 rounded-t-lg flex items-center justify-between">
+                <h1 class="text-xl sm:text-2xl font-bold">Anonymous Chat</h1>
+                <div class="flex items-center space-x-2 bg-indigo-700 px-3 py-1 rounded-full opacity-75">
+                    <div id="my-avatar-display" class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
+                    </div>
+                    <span id="my-anonymous-id" class="text-sm sm:text-base"></span>
+                </div>
+            </div>
 
-        <form id="messageForm" class="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 flex space-x-2">
-            <input
-                id="messageInput"
-                autocomplete="off"
-                class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 placeholder-gray-500 text-sm sm:text-base"
-                placeholder="Type your anonymous message..."
-            />
-            <button
-                type="submit"
-                class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-                Send
-            </button>
-        </form>
+            <ul id="messages" class="flex-grow p-4 sm:p-5 overflow-y-auto bg-gray-50 text-gray-800 text-sm sm:text-base">
+            </ul>
+
+            <div id="reply-context" class="p-3 bg-indigo-100 border-t border-indigo-200 hidden">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-indigo-700 font-medium">Replying to:</span>
+                    <button id="clear-reply" class="text-indigo-700 hover:text-indigo-900 text-sm font-bold ml-2">✖</button>
+                </div>
+                <div class="flex items-start space-x-2 text-sm text-gray-700">
+                    <div class="reply-avatar w-5 h-5 rounded-full overflow-hidden flex-shrink-0"></div>
+                    <div class="flex-grow">
+                        <span class="font-semibold text-indigo-800" id="reply-to-display-id"></span>
+                        <p class="text-gray-600 truncate" id="reply-to-content"></p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="messageForm" class="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 flex space-x-2">
+                <input
+                    id="messageInput"
+                    autocomplete="off"
+                    class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 placeholder-gray-500 text-sm sm:text-base"
+                    placeholder="Type your anonymous message..."
+                />
+                <button
+                    type="submit"
+                    class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Send
+                </button>
+            </form>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
