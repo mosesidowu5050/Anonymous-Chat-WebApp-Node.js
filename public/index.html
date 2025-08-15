@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="font-inter bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
+    <div class="chat-container bg-white shadow-xl rounded-lg w-full max-w-md mx-auto overflow-hidden flex flex-col">
+        <div class="bg-indigo-600 text-white p-4 sm:p-5 rounded-t-lg flex items-center justify-between">
+            <h1 class="text-xl sm:text-2xl font-bold">Anonymous Chat</h1>
+            <span id="my-anonymous-id" class="text-sm sm:text-base bg-indigo-700 px-3 py-1 rounded-full opacity-75"></span>
+        </div>
+
+        <ul id="messages" class="flex-grow p-4 sm:p-5 overflow-y-auto bg-gray-50 text-gray-800 text-sm sm:text-base">
+        </ul>
+
+        <form id="messageForm" class="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 flex space-x-2">
+            <input
+                id="messageInput"
+                autocomplete="off"
+                class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 placeholder-gray-500 text-sm sm:text-base"
+                placeholder="Type your anonymous message..."
+            />
+            <button
+                type="submit"
+                class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+                Send
+            </button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/client.js"></script>
+</body>
+</html>

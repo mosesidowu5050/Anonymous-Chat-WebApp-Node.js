@@ -4,23 +4,26 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
+const Message = require('./src/models/Message');
+
 
 dotenv.config();
-
-const Message = require('/src/models/Message');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/anonymous_chat_db';
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
 
 app.use(express.static(path.join(__dirname, 'public')));
+console.log('Serving static files from:', path.join(__dirname, 'public'));
+
+
 io.on('connection', (socket) => {
     console.log('An anonymous user connected', socket.id);
 

@@ -1,0 +1,17 @@
+.chat-container {
+    height: 90vh; 
+    max-height: 900px; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+#messages {
+    flex-grow: 1; 
+    overflow-y: auto; 
+}
+
+@media (max-width: 640px) {
+    .chat-container {
+        height: 95vh;
+    }
+}
