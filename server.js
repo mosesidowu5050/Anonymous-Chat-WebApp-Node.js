@@ -2,19 +2,28 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+// const dotenv = require('dotenv');
 const path = require('path');
 
 const Message = require('./src/models/Message');
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/anonymous_chat_db';
+//const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/anonymous_chat_db';
+
+
+const MONGODB_URI = process.env.MONGODB_URI; 
+if (!MONGODB_URI) {
+    console.error('Error: MONGODB_URI environment variable is not set!');
+    process.exit(1); 
+}
 
 mongoose.connect(MONGODB_URI)
     .then(() => console.log('MongoDB connected successfully'))

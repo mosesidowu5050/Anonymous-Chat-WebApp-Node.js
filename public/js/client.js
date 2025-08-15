@@ -301,6 +301,59 @@ messageForm.addEventListener('submit', (e) => {
     }
 });
 
+
+
+
+function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
+const appTitleFromParam = getQueryParam('appTitle');
+const logoUrlFromParam = getQueryParam('logoUrl');
+
+const defaultBrowserTitle = 'Anonymous Chat';
+const defaultChatHeaderTitle = 'Anonymous Chat'; 
+const defaultFaviconPath = '/img/log.png'; 
+
+if (appTitleFromParam) {
+    document.title = appTitleFromParam;
+} else {
+    document.title = defaultBrowserTitle;
+}
+
+
+const faviconLinkElement = document.getElementById('faviconLink');
+if (faviconLinkElement) {
+    if (logoUrlFromParam) {
+        faviconLinkElement.href = logoUrlFromParam;
+        faviconLinkElement.onerror = () => {
+            console.error('Failed to load favicon from URL:', logoUrlFromParam);
+            faviconLinkElement.href = defaultFaviconPath; 
+        };
+    } else {
+        faviconLinkElement.href = defaultFaviconPath;
+    }
+} else {
+    let link = document.createElement('link');
+    link.id = 'faviconLink';
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.href = logoUrlFromParam || defaultFaviconPath;
+    document.head.appendChild(link);
+}
+
+const chatHeaderTitleElement = document.getElementById('chatHeaderTitle');
+if (chatHeaderTitleElement) {
+    if (appTitleFromParam) {
+        chatHeaderTitleElement.textContent = appTitleFromParam;
+    } else {
+        chatHeaderTitleElement.textContent = defaultChatHeaderTitle;
+    }
+}
+
+
+
 socket.on('chat message', (msg) => {
     appendMessage(msg, false); 
     currentlyTypingUsers.delete(msg.anonymousDisplayId);
